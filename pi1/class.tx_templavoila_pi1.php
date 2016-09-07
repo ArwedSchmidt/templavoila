@@ -1,74 +1,68 @@
 <?php
-/*
- * This file is part of the TYPO3 CMS project.
+/***************************************************************
+ *  Copyright notice
  *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ *  (c) 2003, 2004 Kasper Skaarhoj (kasper@typo3.com)
+ *  All rights reserved
  *
- * For the full copyright and license information, please read the
- * LICENSE.txt file that was distributed with this source code.
+ *  This script is part of the TYPO3 project. The TYPO3 project is
+ *  free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * The TYPO3 project - inspiring people to share!
+ *  The GNU General Public License can be found at
+ *  http://www.gnu.org/copyleft/gpl.html.
+ *
+ *  This script is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  This copyright notice MUST APPEAR in all copies of the script!
+ ***************************************************************/
+/**
+ * Plugin 'Flexible Content' for the 'templavoila' extension.
+ *
+ * $Id$
+ *
+ * @author    Kasper Skaarhoj <kasper@typo3.com>
+ * @coauthor  Robert Lemke <robert@typo3.org>
  */
 
 /**
  * Plugin 'Flexible Content' for the 'templavoila' extension.
  *
- * @author Kasper Skaarhoj <kasper@typo3.com>
- * @coauthor Robert Lemke <robert@typo3.org>
+ * @author    Kasper Skaarhoj <kasper@typo3.com>
+ * @package TYPO3
+ * @subpackage tx_templavoila
  */
-class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
+class tx_templavoila_pi1 extends tslib_pibase {
 
-	/**
-	 * Same as class name
-	 *
-	 * @var string
-	 */
-	public $prefixId = 'tx_templavoila_pi1';
+	var $prefixId = 'tx_templavoila_pi1'; // Same as class name
+	var $scriptRelPath = 'pi1/class.tx_templavoila_pi1.php'; // Path to this script relative to the extension dir.
+	var $extKey = 'templavoila'; // The extension key.
 
-	/**
-	 * Path to this script relative to the extension dir.
-	 *
-	 * @var string
-	 */
-	public $scriptRelPath = 'pi1/class.tx_templavoila_pi1.php';
+	var $inheritValueFromDefault = 1; // If set, children-translations will take the value from the default if "false" (zero or blank)
 
-	/**
-	 * The extension key.
-	 *
-	 * @var string
-	 */
-	public $extKey = 'templavoila';
-
-	/**
-	 * If set, children-translations will take the value from the default if "false" (zero or blank)
-	 *
-	 * @var integer
-	 */
-	public $inheritValueFromDefault = 1;
-
-	/**
-	 * @var boolean
-	 */
-	static public $enablePageRenderer = TRUE;
+	static $enablePageRenderer = TRUE;
 
 	/**
 	 * Markup object
 	 *
-	 * @var \Extension\Templavoila\Domain\Model\HtmlMarkup
+	 * @var tx_templavoila_htmlmarkup
 	 */
-	public $markupObj;
+	var $markupObj;
 
 	/**
 	 * Main function for rendering of Flexible Content elements of TemplaVoila
 	 *
-	 * @param string $content Standard content input. Ignore.
-	 * @param array $conf TypoScript array for the plugin.
+	 * @param    string        Standard content input. Ignore.
+	 * @param    array        TypoScript array for the plugin.
 	 *
-	 * @return string HTML content for the Flexible Content elements.
+	 * @return    string        HTML content for the Flexible Content elements.
 	 */
-	public function main($content, $conf) {
+	function main($content, $conf) {
 		$this->initVars($conf);
 
 		return $this->renderElement($this->cObj->data, 'tt_content');
@@ -84,16 +78,16 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	 * lib.members = CONTENT
 	 * lib.members {
 	 *    select {
-	 * pidInList = {$styles.content.loginform.pid}
-	 * orderBy = tx_lglalv_mysorting,uid
+	 *        pidInList = {$styles.content.loginform.pid}
+	 *        orderBy = tx_lglalv_mysorting,uid
 	 *    }
 	 *    table = fe_users
 	 *    renderObj = USER
 	 *    renderObj {
-	 * userFunc = tx_templavoila_pi1->main_record
-	 * ds = 2
-	 * to = 4
-	 * table = fe_users
+	 *        userFunc = tx_templavoila_pi1->main_record
+	 *        ds = 2
+	 *        to = 4
+	 *        table = fe_users
 	 *    }
 	 * }
 	 * </pre/></code>
@@ -114,7 +108,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	 * @todo Create TS element with this functionality?
 	 * @todo Support sheet selector?
 	 */
-	public function main_record($content, $conf) {
+	function main_record($content, $conf) {
 		$this->initVars($conf);
 
 		// Make a copy of the data, do not spoil original!
@@ -124,8 +118,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 		$data['tx_templavoila_ds'] = $conf['ds'];
 		$data['tx_templavoila_to'] = $conf['to'];
 
-		/** @var \Extension\Templavoila\Domain\Repository\DataStructureRepository $dsRepo */
-		$dsRepo = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\Extension\Templavoila\Domain\Repository\DataStructureRepository::class);
+		$dsRepo = t3lib_div::makeInstance('tx_templavoila_datastructureRepository');
 
 		// prepare fake flexform
 		$values = array();
@@ -155,7 +148,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 			}
 			$values['data']['sDEF'][$lKey][$k][$vKey] = $v;
 		}
-		$ff = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\FlexForm\FlexFormTools::class);
+		$ff = t3lib_div::makeInstance('t3lib_flexformtools');
 		$data['tx_templavoila_flex'] = $ff->flexArray2xml($values);
 
 		return $this->renderElement($data, $conf['table']);
@@ -164,12 +157,12 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	/**
 	 * Main function for rendering of Page Templates of TemplaVoila
 	 *
-	 * @param string $content Standard content input. Ignore.
-	 * @param array $conf TypoScript array for the plugin.
+	 * @param    string        Standard content input. Ignore.
+	 * @param    array        TypoScript array for the plugin.
 	 *
-	 * @return string HTML content for the Page Template elements.
+	 * @return    string        HTML content for the Page Template elements.
 	 */
-	public function main_page($content, $conf) {
+	function main_page($content, $conf) {
 		$this->initVars($conf);
 
 		// Current page record which we MIGHT manipulate a little:
@@ -207,11 +200,11 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	/**
 	 * Will set up various stuff in the class based on input TypoScript
 	 *
-	 * @param array $conf TypoScript options
+	 * @param    array        TypoScript options
 	 *
-	 * @return void
+	 * @return    void
 	 */
-	public function initVars($conf) {
+	function initVars($conf) {
 		$this->inheritValueFromDefault = $conf['dontInheritValueFromDefault'] ? 0 : 1;
 		// naming choosen to fit the regular TYPO3 integrators needs ;)
 		self::$enablePageRenderer = isset($conf['advancedHeaderInclusion']) ? $conf['advancedHeaderInclusion'] : self::$enablePageRenderer;
@@ -222,21 +215,19 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	 * Common function for rendering of the Flexible Content / Page Templates.
 	 * For Page Templates the input row may be manipulated to contain the proper reference to a data structure (pages can have those inherited which content elements cannot).
 	 *
-	 * @param array $row Current data record, either a tt_content element or page record.
-	 * @param string $table Table name, either "pages" or "tt_content".
+	 * @param    array        Current data record, either a tt_content element or page record.
+	 * @param    string        Table name, either "pages" or "tt_content".
 	 *
-	 * @throws RuntimeException
-	 *
-	 * @return string HTML output.
+	 * @return    string        HTML output.
 	 */
-	public function renderElement($row, $table) {
+	function renderElement($row, $table) {
 		global $TYPO3_CONF_VARS;
 
 		// First prepare user defined objects (if any) for hooks which extend this function:
 		$hookObjectsArr = array();
 		if (is_array($TYPO3_CONF_VARS['EXTCONF']['templavoila']['pi1']['renderElementClass'])) {
 			foreach ($TYPO3_CONF_VARS['EXTCONF']['templavoila']['pi1']['renderElementClass'] as $classRef) {
-				$hookObjectsArr[] = & \TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($classRef);
+				$hookObjectsArr[] = & t3lib_div::getUserObj($classRef);
 			}
 		}
 
@@ -247,9 +238,8 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 			}
 		}
 
-		$dsRepo = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\Extension\Templavoila\Domain\Repository\DataStructureRepository::class);
+		$dsRepo = t3lib_div::makeInstance('tx_templavoila_datastructureRepository');
 		try {
-			/** @var \Extension\Templavoila\Domain\Model\DataStructure $dsObj */
 			$dsObj = $dsRepo->getDatastructureByUidOrFilename($row['tx_templavoila_ds']);
 			$DS = $dsObj->getDataprotArray();
 		} catch (InvalidArgumentException $e) {
@@ -262,7 +252,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 			// Sheet Selector:
 			if ($DS['meta']['sheetSelector']) {
 				// <meta><sheetSelector> could be something like "EXT:user_extension/class.user_extension_selectsheet.php:&amp;user_extension_selectsheet"
-				$sheetSelector = & \TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($DS['meta']['sheetSelector']);
+				$sheetSelector = & t3lib_div::getUserObj($DS['meta']['sheetSelector']);
 				$renderSheet = $sheetSelector->selectSheet();
 			} else {
 				$renderSheet = 'sDEF';
@@ -271,10 +261,10 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 			// Initialize:
 			$langChildren = $DS['meta']['langChildren'] ? 1 : 0;
 			$langDisabled = $DS['meta']['langDisable'] ? 1 : 0;
-			list ($dataStruct, $sheet, $singleSheet) = \TYPO3\CMS\Core\Utility\GeneralUtility::resolveSheetDefInDS($DS, $renderSheet);
+			list ($dataStruct, $sheet, $singleSheet) = t3lib_div::resolveSheetDefInDS($DS, $renderSheet);
 
 			// Data from FlexForm field:
-			$data = \TYPO3\CMS\Core\Utility\GeneralUtility::xml2array($row['tx_templavoila_flex']);
+			$data = t3lib_div::xml2array($row['tx_templavoila_flex']);
 
 			$lKey = ($GLOBALS['TSFE']->sys_language_isocode && !$langDisabled && !$langChildren) ? 'l' . $GLOBALS['TSFE']->sys_language_isocode : 'lDEF';
 
@@ -291,8 +281,8 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 			}
 
 			// Init mark up object.
-			$this->markupObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\Extension\Templavoila\Domain\Model\HtmlMarkup::class);
-			$this->markupObj->htmlParse = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Html\HtmlParser::class);
+			$this->markupObj = t3lib_div::makeInstance('tx_templavoila_htmlmarkup');
+			$this->markupObj->htmlParse = t3lib_div::makeInstance('t3lib_parsehtml');
 
 			// Get template record:
 			if ($row['tx_templavoila_to']) {
@@ -305,10 +295,10 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 							'conf' => is_array($this->conf['childTemplate.']) ? $this->conf['childTemplate.'] : array(),
 							'toRecord' => $row
 						);
-						$renderType = \TYPO3\CMS\Core\Utility\GeneralUtility::callUserFunction(substr($renderType, 9), $conf, $this);
+						$renderType = t3lib_div::callUserFunction(substr($renderType, 9), $conf, $this);
 					}
 				} else { // Default:
-					$renderType = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('print') ? 'print' : '';
+					$renderType = t3lib_div::_GP('print') ? 'print' : '';
 				}
 
 				// Get Template Object record:
@@ -322,7 +312,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 						// Get local processing:
 						$TOproc = array();
 						if ($TOrec['localprocessing']) {
-							$TOproc = \TYPO3\CMS\Core\Utility\GeneralUtility::xml2array($TOrec['localprocessing']);
+							$TOproc = t3lib_div::xml2array($TOrec['localprocessing']);
 							if (!is_array($TOproc)) {
 								// Must be a error!
 								// TODO log to TT the content of $TOproc (it is a error message now)
@@ -388,10 +378,9 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
 						// Visual identification aids:
 
-						$feedit = is_object(\Extension\Templavoila\Utility\GeneralUtility::getBackendUser()) && method_exists(\Extension\Templavoila\Utility\GeneralUtility::getBackendUser(), 'isFrontendEditingActive') && \Extension\Templavoila\Utility\GeneralUtility::getBackendUser()->isFrontendEditingActive();
+						$feedit = is_object($GLOBALS['BE_USER']) && method_exists($GLOBALS['BE_USER'], 'isFrontendEditingActive') && $GLOBALS['BE_USER']->isFrontendEditingActive();
 
 						if ($GLOBALS['TSFE']->fePreview && $GLOBALS['TSFE']->beUserLogin && !$GLOBALS['TSFE']->workspacePreview && !$this->conf['disableExplosivePreview'] && !$feedit) {
-							throw new \RuntimeException('Further execution of code leads to PHP errors.', 1404750505);
 							$content = $this->visualID($content, $srcPointer, $DSrec, $TOrec, $row, $table);
 						}
 					} else {
@@ -421,15 +410,15 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	 * This will transform the data in the data array according to various rules before the data is merged with the template HTML
 	 * Notice that $dataValues is changed internally as a reference so the function returns no content but internally changes the passed variable for $dataValues.
 	 *
-	 * @param array &$dataValues The data values from the XML file (converted to array). Passed by reference.
-	 * @param array $DSelements The data structure definition which the data in the dataValues array reflects.
-	 * @param array $TOelements The local XML processing information found in associated Template Objects (TO)
-	 * @param string $valueKey Value key
-	 * @param mixed $mappingInfo Mapping information
+	 * @param    array        The data values from the XML file (converted to array). Passed by reference.
+	 * @param    array        The data structure definition which the data in the dataValues array reflects.
+	 * @param    array        The local XML processing information found in associated Template Objects (TO)
+	 * @param    string        Value key
+	 * @param    mixed        Mapping information
 	 *
-	 * @return void
+	 * @return    void
 	 */
-	public function processDataValues(&$dataValues, $DSelements, $TOelements, $valueKey = 'vDEF', $mappingInfo = TRUE) {
+	function processDataValues(&$dataValues, $DSelements, $TOelements, $valueKey = 'vDEF', $mappingInfo = TRUE) {
 		if (is_array($DSelements) && is_array($dataValues)) {
 
 			// Create local processing information array:
@@ -442,7 +431,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 						// Overlaying local processing:
 						if (is_array($TOelements[$key]['tx_templavoila'])) {
 							if (is_array($LP[$key])) {
-								$LP[$key] = \TYPO3\CMS\Core\Utility\GeneralUtility::array_merge_recursive_overrule($LP[$key], $TOelements[$key]['tx_templavoila']);
+								$LP[$key] = t3lib_div::array_merge_recursive_overrule($LP[$key], $TOelements[$key]['tx_templavoila']);
 							} else {
 								$LP[$key] = $TOelements[$key]['tx_templavoila'];
 							}
@@ -563,9 +552,9 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 						}
 					}
 
-					$tsparserObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\TypoScript\Parser\TypoScriptParser::class);
+					$tsparserObj = t3lib_div::makeInstance('t3lib_TSparser');
 
-					$cObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class);
+					$cObj = t3lib_div::makeInstance('tslib_cObj');
 					$cObj->setParent($this->cObj->data, $this->cObj->currentRecord);
 					$cObj->start($dataRecord, '_NO_TABLE');
 
@@ -598,7 +587,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 										// If no value for this object path reference was found, get value:
 										if (!isset($GLOBALS['TSFE']->applicationData['tx_templavoila']['TO_constantCache'][$objPath])) {
 											// Get value from object path:
-											$cF = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\TypoScript\Parser\TypoScriptParser::class);
+											$cF = t3lib_div::makeInstance('t3lib_TSparser');
 											list($objPathValue) = $cF->getVal($objPath, $GLOBALS['TSFE']->tmpl->setup);
 											// Set value in cache table:
 											$GLOBALS['TSFE']->applicationData['tx_templavoila']['TO_constantCache'][$objPath] .= '' . $objPathValue;
@@ -625,7 +614,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 							// Copy current global TypoScript configuration except numerical objects:
 							if (is_array($GLOBALS['TSFE']->tmpl->setup)) {
 								foreach ($GLOBALS['TSFE']->tmpl->setup as $tsObjectKey => $tsObjectValue) {
-									if ($tsObjectKey !== (int)$tsObjectKey) {
+									if ($tsObjectKey !== intval($tsObjectKey)) {
 										$tsparserObj->setup[$tsObjectKey] = $tsObjectValue;
 									}
 								}
@@ -644,14 +633,14 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 					$pOptions = $LP[$key]['proc'];
 					if (is_array($pOptions)) {
 						if ($pOptions['int']) {
-							$dataValues[$key][$valueKey] = (int)$dataValues[$key][$valueKey];
+							$dataValues[$key][$valueKey] = intval($dataValues[$key][$valueKey]);
 						}
 						// HSC of all values by default:
 						if ($pOptions['HSC']) {
 							$dataValues[$key][$valueKey] = htmlspecialchars($dataValues[$key][$valueKey]);
 						}
 						if (trim($pOptions['stdWrap'])) {
-							$tsparserObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\TypoScript\Parser\TypoScriptParser::class);
+							$tsparserObj = t3lib_div::makeInstance('t3lib_TSparser');
 							// BUG HERE: should convert array to TypoScript...
 							$tsparserObj->parse($pOptions['stdWrap']);
 							$dataValues[$key][$valueKey] = $cObj->stdWrap($dataValues[$key][$valueKey], $tsparserObj->setup);
@@ -676,9 +665,9 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	 * Processing of language fallback values (inheritance/overlaying)
 	 * You never need to call this function when "$valueKey" is "vDEF"
 	 *
-	 * @param array $dV Array where the values for language and default might be in as keys for "vDEF" and "vXXX"
-	 * @param string $valueKey Language key, "vXXX"
-	 * @param string $overlayMode Overriding overlay mode from local processing in Data Structure / TO.
+	 * @param    array        Array where the values for language and default might be in as keys for "vDEF" and "vXXX"
+	 * @param    string        Language key, "vXXX"
+	 * @param    string        Overriding overlay mode from local processing in Data Structure / TO.
 	 *
 	 * @return string|array The value
 	 */
@@ -727,7 +716,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 				$returnValue .= $dV[$valueKey];
 			}
 		} catch(\Exception $e) {
-			$this->log($e->getMessage(),  \TYPO3\CMS\Core\Utility\GeneralUtility::SYSLOG_SEVERITY_ERROR);
+			$this->log($e->getMessage(), \t3lib_div::SYSLOG_SEVERITY_ERROR);
 		}
 
 		return $returnValue;
@@ -736,17 +725,17 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	/**
 	 * Creates an error message for frontend output
 	 *
-	 * @param string $string
+	 * @param    [type]        $string: ...
 	 *
-	 * @return string Error message output
-	 * @string string Error message input
+	 * @return    string        Error message output
+	 * @string    string        Error message input
 	 */
-	public function formatError($string) {
+	function formatError($string) {
 
 		// Set no-cache since the error message shouldn't be cached of course...
 		$GLOBALS['TSFE']->set_no_cache();
 
-		if ((int)$this->conf['disableErrorMessages']) {
+		if (intval($this->conf['disableErrorMessages'])) {
 			return '';
 		}
 		//
@@ -769,16 +758,16 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	/**
 	 * Creates a visual response to the TemplaVoila blocks on the page.
 	 *
-	 * @param string $content
-	 * @param string $srcPointer
-	 * @param array $DSrec
-	 * @param array $TOrec
-	 * @param array $row
-	 * @param string $table
+	 * @param    [type]        $content: ...
+	 * @param    [type]        $srcPointer: ...
+	 * @param    [type]        $DSrec: ...
+	 * @param    [type]        $TOrec: ...
+	 * @param    [type]        $row: ...
+	 * @param    [type]        $table: ...
 	 *
-	 * @return string
+	 * @return    [type]        ...
 	 */
-	public function visualID($content, $srcPointer, $DSrec, $TOrec, $row, $table) {
+	function visualID($content, $srcPointer, $DSrec, $TOrec, $row, $table) {
 
 		// Create table rows:
 		$tRows = array();
@@ -786,12 +775,12 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 		switch ($table) {
 			case 'pages':
 				$tRows[] = '<tr style="background-color: #ABBBB4;">
-						<td colspan="2"><b>Page:</b> ' . htmlspecialchars(\TYPO3\CMS\Core\Utility\GeneralUtility::fixed_lgd_cs($row['title'], 30)) . ' <em>[UID:' . $row['uid'] . ']</em></td>
+						<td colspan="2"><b>Page:</b> ' . htmlspecialchars(t3lib_div::fixed_lgd_cs($row['title'], 30)) . ' <em>[UID:' . $row['uid'] . ']</em></td>
 					</tr>';
 				break;
 			case 'tt_content':
 				$tRows[] = '<tr style="background-color: #ABBBB4;">
-						<td colspan="2"><b>Flexible Content:</b> ' . htmlspecialchars(\TYPO3\CMS\Core\Utility\GeneralUtility::fixed_lgd_cs($row['header'], 30)) . ' <em>[UID:' . $row['uid'] . ']</em></td>
+						<td colspan="2"><b>Flexible Content:</b> ' . htmlspecialchars(t3lib_div::fixed_lgd_cs($row['header'], 30)) . ' <em>[UID:' . $row['uid'] . ']</em></td>
 					</tr>';
 				break;
 			default:
@@ -805,7 +794,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 		if (is_numeric($srcPointer)) {
 			$tRows[] = '<tr>
 					<td valign="top"><b>Data Structure:</b></td>
-					<td>' . htmlspecialchars(\TYPO3\CMS\Core\Utility\GeneralUtility::fixed_lgd_cs($DSrec['title'], 30)) . ' <em>[UID:' . $srcPointer . ']</em>' .
+					<td>' . htmlspecialchars(t3lib_div::fixed_lgd_cs($DSrec['title'], 30)) . ' <em>[UID:' . $srcPointer . ']</em>' .
 				($DSrec['previewicon'] ? '<br/><img src="uploads/tx_templavoila/' . $DSrec['previewicon'] . '" alt="" />' : '') .
 				'</td>
 		</tr>';
@@ -819,7 +808,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 		// Template Object:
 		$tRows[] = '<tr>
 				<td valign="top"><b>Template Object:</b></td>
-				<td>' . htmlspecialchars(\TYPO3\CMS\Core\Utility\GeneralUtility::fixed_lgd_cs($TOrec['title'], 30)) . ' <em>[UID:' . $TOrec['uid'] . ']</em>' .
+				<td>' . htmlspecialchars(t3lib_div::fixed_lgd_cs($TOrec['title'], 30)) . ' <em>[UID:' . $TOrec['uid'] . ']</em>' .
 			($TOrec['previewicon'] ? '<br/><img src="uploads/tx_templavoila/' . $TOrec['previewicon'] . '" alt="" />' : '') .
 			'</td>
 	</tr>';
@@ -852,7 +841,7 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 						</table>';
 
 		// Compile information:
-		$id = 'templavoila-preview-' . \TYPO3\CMS\Core\Utility\GeneralUtility::shortMD5(microtime());
+		$id = 'templavoila-preview-' . t3lib_div::shortMD5(microtime());
 		$content = '<div style="text-align: left; position: absolute; display:none; filter: alpha(Opacity=90);" id="' . $id . '">
 						' . $infoArray . '
 					</div>
@@ -874,8 +863,8 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 	/**
 	 * Render section index for TV
 	 *
-	 * @param string $content
-	 * @param array $conf config of tt_content.menu.20.3
+	 * @param  $content
+	 * @param  $conf config of tt_content.menu.20.3
 	 *
 	 * @return string rendered section index
 	 */
@@ -887,19 +876,19 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 			: trim($conf['select.']['pidInList']);
 		$contentIds = array();
 		if ($pids) {
-			$pageIds = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $pids);
+			$pageIds = t3lib_div::trimExplode(',', $pids);
 			foreach ($pageIds as $pageId) {
 				$page = $GLOBALS['TSFE']->sys_page->checkRecord('pages', $pageId);
 				if (isset($page) && isset($page['tx_templavoila_flex'])) {
 					$flex = array();
 					$this->cObj->readFlexformIntoConf($page['tx_templavoila_flex'], $flex);
-					$contentIds = array_merge($contentIds, \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $flex[$ceField]));
+					$contentIds = array_merge($contentIds, t3lib_div::trimExplode(',', $flex[$ceField]));
 				}
 			}
 		} else {
 			$flex = array();
 			$this->cObj->readFlexformIntoConf($GLOBALS['TSFE']->page['tx_templavoila_flex'], $flex);
-			$contentIds = array_merge($contentIds, \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $flex[$ceField]));
+			$contentIds = array_merge($contentIds, t3lib_div::trimExplode(',', $flex[$ceField]));
 		}
 
 		if (count($contentIds) > 0) {
@@ -930,11 +919,15 @@ class tx_templavoila_pi1 extends \TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
 	/**
 	 * @param string $message
-	 * @param int $severity \TYPO3\CMS\Core\Utility\GeneralUtility::SYSLOG_SEVERITY_* constant
+	 * @param int $severity \t3lib_div::SYSLOG_SEVERITY_* constant
 	 *
 	 * @return void
 	 */
 	public function log($message, $severity) {
-		\TYPO3\CMS\Core\Utility\GeneralUtility::sysLog($message, 'templavoila', $severity);
+		\t3lib_div::sysLog($message, 'templavoila', $severity);
 	}
+}
+
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/templavoila/pi1/class.tx_templavoila_pi1.php']) {
+	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/templavoila/pi1/class.tx_templavoila_pi1.php']);
 }

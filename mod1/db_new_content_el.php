@@ -1,24 +1,37 @@
 <?php
-/*
- * This file is part of the TYPO3 CMS project.
+/***************************************************************
+ *  Copyright notice
  *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ *  (c) 2003-2006 Robert Lemke (robert@typo3.org)
+ *  All rights reserved
  *
- * For the full copyright and license information, please read the
- * LICENSE.txt file that was distributed with this source code.
+ *  This script is part of the TYPO3 project. The TYPO3 project is
+ *  free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * The TYPO3 project - inspiring people to share!
- */
-
+ *  The GNU General Public License can be found at
+ *  http://www.gnu.org/copyleft/gpl.html.
+ *  A copy is found in the textfile GPL.txt and important notices to the license
+ *  from the author is found in LICENSE.txt distributed with these scripts.
+ *
+ *
+ *  This script is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  This copyright notice MUST APPEAR in all copies of the script!
+ ***************************************************************/
 /**
  * New content elements wizard for templavoila
  *
+ * $Id$
  * Originally based on the CE wizard / cms extension by Kasper Skaarhoj <kasper@typo3.com>
  * XHTML compatible.
  *
- * @author Robert Lemke <robert@typo3.org>
+ * @author        Robert Lemke <robert@typo3.org>
  * @coauthor    Kasper Skaarhoj <kasper@typo3.com>
  */
 
@@ -31,146 +44,45 @@ unset($MCONF);
 unset($MLANG);
 
 // Merging locallang files/arrays:
-$LANG->includeLLFile('EXT:lang/locallang_misc.xlf');
+$LANG->includeLLFile('EXT:lang/locallang_misc.xml');
 $LOCAL_LANG_orig = $LOCAL_LANG;
-$LANG->includeLLFile('EXT:templavoila/mod1/locallang_db_new_content_el.xlf');
-
-\TYPO3\CMS\Core\Utility\ArrayUtility::mergeRecursiveWithOverrule($LOCAL_LANG_orig, $LOCAL_LANG);
-$LOCAL_LANG = $LOCAL_LANG_orig;
+$LANG->includeLLFile('EXT:templavoila/mod1/locallang_db_new_content_el.xml');
+$LOCAL_LANG = t3lib_div::array_merge_recursive_overrule($LOCAL_LANG_orig, $LOCAL_LANG);
 
 // Exits if 'cms' extension is not loaded:
-\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('cms', 1);
+t3lib_extMgm::isLoaded('cms', 1);
 
 /**
  * Script Class for the New Content element wizard
  *
- * @author Robert Lemke <robert@typo3.org>
+ * @author    Robert Lemke <robert@typo3.org>
+ * @package TYPO3
+ * @subpackage templavoila
  */
 class tx_templavoila_dbnewcontentel {
 
-	/**
-	 * @var string
-	 */
-	protected $defVals;
+	// Internal, static (from GPvars):
+	var $id; // Page id
+	var $parentRecord; // Parameters for the new record
+	var $altRoot; // Array with alternative table, uid and flex-form field (see index.php in module for details, same thing there.)
 
-	/**
-	 * @var array
-	 */
-	protected $config;
+	// Internal, static:
+	var $doc; // Internal backend template object
+	protected $extConf; // Templavoila extension configuration
 
-	/**
-	 * @var \Extension\Templavoila\Service\ApiService
-	 */
-	protected $apiObj;
-
-	/**
-	 * @var array
-	 */
-	protected $elementWrapper;
-
-	/**
-	 * @var array
-	 */
-	protected $elementWrapperForTabs;
-
-	/**
-	 * @var string
-	 */
-	protected $onClickEvent;
-
-	/**
-	 * @var integer
-	 */
-	protected $perms_clause;
-
-	/**
-	 * @var array
-	 */
-	protected $pageinfo;
-
-	/**
-	 * @var array
-	 */
-	protected $MOD_MENU;
-
-	/**
-	 * @var array
-	 */
-	protected $MCONF;
-
-	/**
-	 * @var string
-	 */
-	protected $backPath;
-
-	/**
-	 * Page id
-	 *
-	 * @var integer
-	 */
-	public $id;
-
-	/**
-	 * Parameters for the new record
-	 *
-	 * @var string
-	 */
-	public $parentRecord;
-
-	/**
-	 * Array with alternative table, uid and flex-form field (see index.php in module for details, same thing there.)
-	 *
-	 * @var array
-	 */
-	public $altRoot;
-
-	/**
-	 * Internal backend template object
-	 *
-	 * @var \TYPO3\CMS\Backend\Template\DocumentTemplate
-	 */
-	public $doc;
-
-	/**
-	 * Templavoila extension configuration
-	 *
-	 * @var array
-	 */
-	protected $extConf;
-
-	/**
-	 * Includes a list of files to include between init() and main() - see init()
-	 *
-	 * @var array
-	 */
-	public $include_once = array();
-
-	/**
-	 * Used to accumulate the content of the module.
-	 *
-	 * @var string
-	 */
-	public $content;
-
-	/**
-	 * @var boolean
-	 */
-	public $access;
-
-	/**
-	 * (GPvar "returnUrl") Return URL if the script is supplied with that.
-	 *
-	 * @var string
-	 */
-	public $returnUrl = '';
+	// Internal, dynamic:
+	var $include_once = array(); // Includes a list of files to include between init() and main() - see init()
+	var $content; // Used to accumulate the content of the module.
+	var $access; // Access boolean.
+	var $returnUrl = ''; // (GPvar "returnUrl") Return URL if the script is supplied with that.
 
 	/**
 	 * Initialize internal variables.
 	 *
-	 * @return void
+	 * @return    void
 	 */
-	public function init() {
-		global $BACK_PATH, $TBE_MODULES_EXT;
+	function init() {
+		global $BE_USER, $BACK_PATH, $TBE_MODULES_EXT;
 
 		// Setting class files to include:
 		if (is_array($TBE_MODULES_EXT['xMOD_db_new_content_el']['addElClasses'])) {
@@ -180,36 +92,40 @@ class tx_templavoila_dbnewcontentel {
 		$this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['templavoila']);
 
 		// Setting internal vars:
-		$this->id = (int)\TYPO3\CMS\Core\Utility\GeneralUtility::_GP('id');
-		$this->parentRecord = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('parentRecord');
-		$this->altRoot = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('altRoot');
-		$this->defVals = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('defVals');
-		$this->returnUrl = \TYPO3\CMS\Core\Utility\GeneralUtility::sanitizeLocalUrl(\TYPO3\CMS\Core\Utility\GeneralUtility::_GP('returnUrl'));
+		$this->id = intval(t3lib_div::_GP('id'));
+		$this->parentRecord = t3lib_div::_GP('parentRecord');
+		$this->altRoot = t3lib_div::_GP('altRoot');
+		$this->defVals = t3lib_div::_GP('defVals');
+		$this->returnUrl = t3lib_div::sanitizeLocalUrl(t3lib_div::_GP('returnUrl'));
 
 		// Starting the document template object:
-		$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Backend\Template\DocumentTemplate::class);
+		$this->doc = t3lib_div::makeInstance('template');
 		$this->doc->docType = 'xhtml_trans';
 		$this->doc->backPath = $BACK_PATH;
-		$this->doc->setModuleTemplate('EXT:templavoila/Resources/Private/Templates/mod1_new_content.html');
+		$this->doc->setModuleTemplate('EXT:templavoila/Resources/templates/mod1_new_content.html');
 		$this->doc->bodyTagId = 'typo3-mod-php';
 		$this->doc->divClass = '';
 		$this->doc->JScode = '';
 
 		$this->doc->getPageRenderer()->loadPrototype();
 
-		$this->doc->loadJavascriptLib('sysext/backend/Resources/Public/JavaScript/tabmenu.js');
+		if (tx_templavoila_div::convertVersionNumberToInteger(TYPO3_version) >= 6002000) {
+			$this->doc->loadJavascriptLib('sysext/backend/Resources/Public/JavaScript/tabmenu.js');
+		} else {
+			$this->doc->loadJavascriptLib('js/tabmenu.js');
+		}
 
 		$this->doc->form = '<form action="" name="editForm">';
 
-		$tsconfig = \TYPO3\CMS\Backend\Utility\BackendUtility::getModTSconfig($this->id, 'templavoila.wizards.newContentElement');
+		$tsconfig = t3lib_BEfunc::getModTSconfig($this->id, 'templavoila.wizards.newContentElement');
 		$this->config = $tsconfig['properties'];
 
 		// Getting the current page and receiving access information (used in main())
-		$perms_clause = \Extension\Templavoila\Utility\GeneralUtility::getBackendUser()->getPagePermsClause(1);
-		$pageinfo = \TYPO3\CMS\Backend\Utility\BackendUtility::readPageAccess($this->id, $perms_clause);
-		$this->access = is_array($pageinfo) ? TRUE : FALSE;
+		$perms_clause = $BE_USER->getPagePermsClause(1);
+		$pageinfo = t3lib_BEfunc::readPageAccess($this->id, $perms_clause);
+		$this->access = is_array($pageinfo) ? 1 : 0;
 
-		$this->apiObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\Extension\Templavoila\Service\ApiService::class);
+		$this->apiObj = t3lib_div::makeInstance('tx_templavoila_api');
 
 		// If no parent record was specified, find one:
 		if (!$this->parentRecord) {
@@ -223,25 +139,27 @@ class tx_templavoila_dbnewcontentel {
 	/**
 	 * Creating the module output.
 	 *
-	 * @throws \UnexpectedValueException
-	 *
-	 * @return void
-	 * @todo provide position mapping if no position is given already. Like the columns selector but for our cascading element style ...
+	 * @return    void
+	 * @todo    provide position mapping if no position is given already. Like the columns selector but for our cascading element style ...
 	 */
-	public function main() {
+	function main() {
+		global $LANG, $BACK_PATH;
+
 		if ($this->id && $this->access) {
 
 			// Creating content
-			$this->content = $this->doc->header(\Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->getLL('newContentElement'));
+			$this->content = $this->doc->header($LANG->getLL('newContentElement'));
 			$this->content .= $this->doc->spacer(5);
 
-			$elRow = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordWSOL('pages', $this->id);
-			$header = \TYPO3\CMS\Backend\Utility\IconUtility::getSpriteIconForRecord('pages', $elRow);
-			$header .= \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordTitle('pages', $elRow, 1);
+			$elRow = t3lib_BEfunc::getRecordWSOL('pages', $this->id);
+			$header = t3lib_iconWorks::getSpriteIconForRecord('pages', $elRow);
+			$header .= t3lib_BEfunc::getRecordTitle('pages', $elRow, 1);
 			$this->content .= $this->doc->section('', $header, 0, 1);
 			$this->content .= $this->doc->spacer(10);
 
 			// Wizard
+			$wizardCode = '';
+			$tableRows = array();
 			$wizardItems = $this->getWizardItems();
 
 			// Wrapper for wizards
@@ -255,9 +173,9 @@ class tx_templavoila_dbnewcontentel {
 			// Hook for manipulating wizardItems, wrapper, onClickEvent etc.
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['templavoila']['db_new_content_el']['wizardItemsHook'])) {
 				foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['templavoila']['db_new_content_el']['wizardItemsHook'] as $classData) {
-					$hookObject = \TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($classData);
+					$hookObject = t3lib_div::getUserObj($classData);
 
-					if (!($hookObject instanceof \TYPO3\CMS\Backend\Wizard\NewContentElementWizardHookInterface)) {
+					if (!($hookObject instanceof cms_newContentElementWizardsHook)) {
 						throw new UnexpectedValueException('$hookObject must implement interface cms_newContentElementWizardItemsHook', 1227834741);
 					}
 
@@ -291,11 +209,8 @@ class tx_templavoila_dbnewcontentel {
 
 			// Traverse items for the wizard.
 			// An item is either a header or an item rendered with a title/description and icon:
-			$menuItems = array();
+			$counter = 0;
 			foreach ($wizardItems as $k => $wInfo) {
-				/**
-				 * @todo: Find out what exactly happens here. The whole loop feels strange
-				 */
 				if ($wInfo['header']) {
 					$menuItems[] = array('label' => htmlspecialchars($wInfo['header']), 'content' => $this->elementWrapper['section'][0]);
 					$key = count($menuItems) - 1;
@@ -305,7 +220,7 @@ class tx_templavoila_dbnewcontentel {
 					$newRecordLink = 'index.php?' . $this->linkParams() . '&createNewRecord=' . rawurlencode($this->parentRecord) . $wInfo['params'];
 
 					$content .= $this->elementWrapper['wizardPart'][0] . '<a href="' . htmlspecialchars($newRecordLink) . '">
-						<img' . \TYPO3\CMS\Backend\Utility\IconUtility::skinImg($this->doc->backPath, $wInfo['icon'], '') . ' alt="" /></a>' . $this->elementWrapper['wizardPart'][1];
+						<img' . t3lib_iconWorks::skinImg($this->doc->backPath, $wInfo['icon'], '') . ' alt="" /></a>' . $this->elementWrapper['wizardPart'][1];
 
 					// Title + description:
 					$content .= $this->elementWrapper['wizardPart'][0] . '<a href="' . htmlspecialchars($newRecordLink) . '"><strong>' . htmlspecialchars($wInfo['title']) . '</strong><br />' . nl2br(htmlspecialchars(trim($wInfo['description']))) . '</a>' . $this->elementWrapper['wizardPart'][1];
@@ -326,27 +241,27 @@ class tx_templavoila_dbnewcontentel {
 					.typo3-dyntabmenu-divs table { margin: 15px; }
 					.typo3-dyntabmenu-divs table td { padding: 3px; }
 				';
-				$code = \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->getLL('sel1', TRUE) . '<br /><br />' . $this->doc->getDynTabMenu($menuItems, 'new-content-element-wizard', FALSE, FALSE, 100);
+				$code = $LANG->getLL('sel1', 1) . '<br /><br />' . $this->doc->getDynTabMenu($menuItems, 'new-content-element-wizard', FALSE, FALSE, 100);
 			} else {
-				$code = \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->getLL('sel1', TRUE) . '<br /><br />';
+				$code = $LANG->getLL('sel1', 1) . '<br /><br />';
 				foreach ($menuItems as $section) {
 					$code .= $this->elementWrapper['sectionHeader'][0] . $section['label'] . $this->elementWrapper['sectionHeader'][1] . $section['content'];
 				}
 			}
 
-			$this->content .= $this->doc->section(!$this->onClickEvent ? \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->getLL('1_selectType') : '', $code, 0, 1);
+			$this->content .= $this->doc->section(!$this->onClickEvent ? $LANG->getLL('1_selectType') : '', $code, 0, 1);
 		} else { // In case of no access:
-			$this->content = $this->doc->header(\Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->getLL('newContentElement'));
+			$this->content = $this->doc->header($LANG->getLL('newContentElement'));
 		}
 
-		$this->pageinfo = \TYPO3\CMS\Backend\Utility\BackendUtility::readPageAccess($this->id, $this->perms_clause);
+		$this->pageinfo = t3lib_BEfunc::readPageAccess($this->id, $this->perms_clause);
 		$docHeaderButtons = $this->getDocHeaderButtons();
 		$docContent = array(
 			'CSH' => $docHeaderButtons['csh'],
 			'CONTENT' => $this->content
 		);
 
-		$content = $this->doc->startPage(\Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->getLL('newContentElement'));
+		$content = $this->doc->startPage($LANG->getLL('newContentElement'));
 		$content .= $this->doc->moduleBody(
 			$this->pageinfo,
 			$docHeaderButtons,
@@ -361,19 +276,19 @@ class tx_templavoila_dbnewcontentel {
 	/**
 	 * Gets the buttons that shall be rendered in the docHeader.
 	 *
-	 * @return array Available buttons for the docHeader
+	 * @return    array        Available buttons for the docHeader
 	 */
 	protected function getDocHeaderButtons() {
 		$buttons = array(
-			'csh' => \TYPO3\CMS\Backend\Utility\BackendUtility::cshItem('_MOD_web_txtemplavoilaCM1', '', $this->backPath),
+			'csh' => t3lib_BEfunc::cshItem('_MOD_web_txtemplavoilaCM1', '', $this->backPath),
 			'back' => '',
 			'shortcut' => $this->getShortcutButton(),
 		);
 
 		// Back
 		if ($this->returnUrl) {
-			$backIcon = \TYPO3\CMS\Backend\Utility\IconUtility::getSpriteIcon('actions-view-go-back');
-			$buttons['back'] = '<a href="' . htmlspecialchars(\TYPO3\CMS\Core\Utility\GeneralUtility::linkThisUrl($this->returnUrl)) . '" class="typo3-goBack" title="' . \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->sL('LLL:EXT:lang/locallang_core.xlf:labels.goBack', TRUE) . '">' .
+			$backIcon = t3lib_iconWorks::getSpriteIcon('actions-view-go-back');
+			$buttons['back'] = '<a href="' . htmlspecialchars(t3lib_div::linkThisUrl($this->returnUrl)) . '" class="typo3-goBack" title="' . $GLOBALS['LANG']->sL('LLL:EXT:lang/locallang_core.php:labels.goBack', TRUE) . '">' .
 				$backIcon .
 				'</a>';
 		}
@@ -384,12 +299,12 @@ class tx_templavoila_dbnewcontentel {
 	/**
 	 * Gets the button to set a new shortcut in the backend (if current user is allowed to).
 	 *
-	 * @return string HTML representiation of the shortcut button
+	 * @return    string        HTML representiation of the shortcut button
 	 */
 	protected function getShortcutButton() {
 		$result = '';
 		$menu = is_array($this->MOD_MENU) ? $this->MOD_MENU : array();
-		if (\Extension\Templavoila\Utility\GeneralUtility::getBackendUser()->mayMakeShortcut()) {
+		if ($GLOBALS['BE_USER']->mayMakeShortcut()) {
 			$result = $this->doc->makeShortcutIcon('id', implode(',', array_keys($menu)), $this->MCONF['name']);
 		}
 
@@ -399,18 +314,20 @@ class tx_templavoila_dbnewcontentel {
 	/**
 	 * Print out the accumulated content:
 	 *
-	 * @return void
+	 * @return    void
 	 */
-	public function printContent() {
+	function printContent() {
 		$this->content = $this->doc->insertStylesAndJS($this->content);
 		echo $this->content;
 	}
 
 	/**
-	 * @return string
+	 * [Describe function...]
+	 *
+	 * @return    [type]        ...
 	 */
-	public function linkParams() {
-		$output = 'id=' . $this->id . (is_array($this->altRoot) ? \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl('altRoot', $this->altRoot) : '');
+	function linkParams() {
+		$output = 'id=' . $this->id . (is_array($this->altRoot) ? t3lib_div::implodeArrayForUrl('altRoot', $this->altRoot) : '');
 
 		return $output;
 	}
@@ -424,9 +341,9 @@ class tx_templavoila_dbnewcontentel {
 	/**
 	 * Returns the content of wizardArray() function...
 	 *
-	 * @return array Returns the content of wizardArray() function...
+	 * @return    array        Returns the content of wizardArray() function...
 	 */
-	public function getWizardItems() {
+	function getWizardItems() {
 		return $this->wizardArray();
 	}
 
@@ -434,11 +351,10 @@ class tx_templavoila_dbnewcontentel {
 	 * Returns the array of elements in the wizard display.
 	 * For the plugin section there is support for adding elements there from a global variable.
 	 *
-	 * @return array
+	 * @return    array
 	 */
-	public function wizardArray() {
+	function wizardArray() {
 
-		$wizards = array();
 		if (is_array($this->config)) {
 			$wizards = $this->config['wizardItems.'];
 		}
@@ -451,13 +367,12 @@ class tx_templavoila_dbnewcontentel {
 		if (is_array($wizards)) {
 			foreach ($wizards as $groupKey => $wizardGroup) {
 				$groupKey = preg_replace('/\.$/', '', $groupKey);
-				$showItems = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $wizardGroup['show'], TRUE);
+				$showItems = t3lib_div::trimExplode(',', $wizardGroup['show'], TRUE);
 				$showAll = (strcmp($wizardGroup['show'], '*') ? FALSE : TRUE);
 				$groupItems = array();
 
 				if (is_array($appendWizards[$groupKey . '.']['elements.'])) {
-					$wizardElements = (array)$wizardGroup['elements.'];
-					\TYPO3\CMS\Core\Utility\ArrayUtility::mergeRecursiveWithOverrule($wizardElements, $appendWizards[$groupKey . '.']['elements.']);
+					$wizardElements = t3lib_div::array_merge_recursive_overrule((array) $wizardGroup['elements.'], $appendWizards[$groupKey . '.']['elements.']);
 				} else {
 					$wizardElements = $wizardGroup['elements.'];
 				}
@@ -493,14 +408,14 @@ class tx_templavoila_dbnewcontentel {
 	 *
 	 * @return array $returnElements
 	 */
-	public function wizard_appendWizards($wizardElements) {
+	function wizard_appendWizards($wizardElements) {
 		if (!is_array($wizardElements)) {
 			$wizardElements = array();
 		}
 		// plugins
 		if (is_array($GLOBALS['TBE_MODULES_EXT']['xMOD_db_new_content_el']['addElClasses'])) {
 			foreach ($GLOBALS['TBE_MODULES_EXT']['xMOD_db_new_content_el']['addElClasses'] as $class => $path) {
-				$modObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance($class);
+				$modObj = t3lib_div::makeInstance($class);
 				$wizardElements = $modObj->proc($wizardElements);
 			}
 		}
@@ -521,22 +436,24 @@ class tx_templavoila_dbnewcontentel {
 	 *
 	 * @return array $returnElements
 	 */
-	public function wizard_renderFCEs($wizardElements = array()) {
+	function wizard_renderFCEs($wizardElements) {
+		if (!is_array($wizardElements)) {
+			$wizardElements = array();
+		}
 		$returnElements = array();
 
 		// Flexible content elements:
 		$positionPid = $this->id;
 		$storageFolderPID = $this->apiObj->getStorageFolderPid($positionPid);
 
-		$toRepo = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\Extension\Templavoila\Domain\Repository\TemplateRepository::class);
-		$toList = $toRepo->getTemplatesByStoragePidAndScope($storageFolderPID, \Extension\Templavoila\Domain\Model\AbstractDataStructure::SCOPE_FCE);
+		$toRepo = t3lib_div::makeInstance('tx_templavoila_templateRepository');
+		$toList = $toRepo->getTemplatesByStoragePidAndScope($storageFolderPID, tx_templavoila_datastructure::SCOPE_FCE);
 		foreach ($toList as $toObj) {
-			/** @var \Extension\Templavoila\Domain\Model\Template $toObj */
 			if ($toObj->isPermittedForUser()) {
 				$tmpFilename = $toObj->getIcon();
 				$returnElements['fce.']['elements.']['fce_' . $toObj->getKey() . '.'] = array(
-					'icon' => (@is_file(\TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName(substr($tmpFilename, 3)))) ? $tmpFilename : ('../' . \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath('templavoila') . 'Resources/Public/Image/default_previewicon.gif'),
-					'description' => $toObj->getDescription() ? htmlspecialchars($toObj->getDescription()) : \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->getLL('template_nodescriptionavailable'),
+					'icon' => (@is_file(t3lib_div::getFileAbsFileName(substr($tmpFilename, 3)))) ? $tmpFilename : ('../' . t3lib_extMgm::siteRelPath('templavoila') . 'Resources/Public/Image/default_previewicon.gif'),
+					'description' => $toObj->getDescription() ? htmlspecialchars($toObj->getDescription()) : $GLOBALS['LANG']->getLL('template_nodescriptionavailable'),
 					'title' => $toObj->getLabel(),
 					'params' => $this->getDsDefaultValues($toObj)
 				);
@@ -546,46 +463,36 @@ class tx_templavoila_dbnewcontentel {
 		return $returnElements;
 	}
 
-	/**
-	 * @param string $groupKey
-	 * @param string $itemKey
-	 * @param array $itemConf
-	 *
-	 * @return mixed
-	 */
-	public function wizard_getItem($groupKey, $itemKey, $itemConf) {
-		$itemConf['title'] = \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->sL($itemConf['title']);
-		$itemConf['description'] = \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->sL($itemConf['description']);
+	function wizard_getItem($groupKey, $itemKey, $itemConf) {
+		$itemConf['title'] = $GLOBALS['LANG']->sL($itemConf['title']);
+		$itemConf['description'] = $GLOBALS['LANG']->sL($itemConf['description']);
 		$itemConf['tt_content_defValues'] = $itemConf['tt_content_defValues.'];
 		unset($itemConf['tt_content_defValues.']);
 
 		return $itemConf;
 	}
 
-	/**
-	 * @param string $groupKey
-	 * @param array $wizardGroup
-	 *
-	 * @return array
-	 */
-	public function wizard_getGroupHeader($groupKey, $wizardGroup) {
-		return array('header' => \Extension\Templavoila\Utility\GeneralUtility::getLanguageService()->sL($wizardGroup['header']));
+	function wizard_getGroupHeader($groupKey, $wizardGroup) {
+		return array('header' => $GLOBALS['LANG']->sL($wizardGroup['header']));
 	}
 
 	/**
 	 * Checks the array for elements which might contain unallowed default values and will unset them!
 	 * Looks for the "tt_content_defValues" key in each element and if found it will traverse that array as fieldname / value pairs and check. The values will be added to the "params" key of the array (which should probably be unset or empty by default).
 	 *
-	 * @param array &$wizardItems Wizard items, passed by reference
+	 * @param    array        Wizard items, passed by reference
 	 *
-	 * @return void
+	 * @return    void
 	 */
-	public function removeInvalidElements(&$wizardItems) {
+	function removeInvalidElements(&$wizardItems) {
 		global $TCA;
 
+		// Load full table definition:
+		t3lib_div::loadTCA('tt_content');
+
 		// Get TCEFORM from TSconfig of current page
-		$TCEFORM_TSconfig = \TYPO3\CMS\Backend\Utility\BackendUtility::getTCEFORM_TSconfig('tt_content', array('pid' => $this->id));
-		$removeItems = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $TCEFORM_TSconfig['CType']['removeItems'], 1);
+		$TCEFORM_TSconfig = t3lib_BEfunc::getTCEFORM_TSconfig('tt_content', array('pid' => $this->id));
+		$removeItems = t3lib_div::trimExplode(',', $TCEFORM_TSconfig['CType']['removeItems'], 1);
 
 		$headersUsed = Array();
 		// Traverse wizard items:
@@ -594,12 +501,12 @@ class tx_templavoila_dbnewcontentel {
 			// Exploding parameter string, if any (old style)
 			if ($wizardItems[$key]['params']) {
 				// Explode GET vars recursively
-				$tempGetVars = \TYPO3\CMS\Core\Utility\GeneralUtility::explodeUrl2Array($wizardItems[$key]['params'], TRUE);
+				$tempGetVars = t3lib_div::explodeUrl2Array($wizardItems[$key]['params'], TRUE);
 				// If tt_content values are set, merge them into the tt_content_defValues array, unset them from $tempGetVars and re-implode $tempGetVars into the param string (in case remaining parameters are around).
 				if (is_array($tempGetVars['defVals']['tt_content'])) {
 					$wizardItems[$key]['tt_content_defValues'] = array_merge(is_array($wizardItems[$key]['tt_content_defValues']) ? $wizardItems[$key]['tt_content_defValues'] : array(), $tempGetVars['defVals']['tt_content']);
 					unset($tempGetVars['defVals']['tt_content']);
-					$wizardItems[$key]['params'] = \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl('', $tempGetVars);
+					$wizardItems[$key]['params'] = t3lib_div::implodeArrayForUrl('', $tempGetVars);
 				}
 			}
 
@@ -611,7 +518,7 @@ class tx_templavoila_dbnewcontentel {
 					if (is_array($TCA['tt_content']['columns'][$fN])) {
 						// Get information about if the field value is OK:
 						$config = & $TCA['tt_content']['columns'][$fN]['config'];
-						$authModeDeny = $config['type'] == 'select' && $config['authMode'] && !\Extension\Templavoila\Utility\GeneralUtility::getBackendUser()->checkAuthMode('tt_content', $fN, $fV, $config['authMode']);
+						$authModeDeny = $config['type'] == 'select' && $config['authMode'] && !$GLOBALS['BE_USER']->checkAuthMode('tt_content', $fN, $fV, $config['authMode']);
 
 						if ($authModeDeny || in_array($fV, $removeItems)) {
 							// Remove element all together:
@@ -640,19 +547,19 @@ class tx_templavoila_dbnewcontentel {
 	/**
 	 * Create sql condition for given table to limit records according to user access.
 	 *
-	 * @param string $table Table nme to fetch records from
+	 * @param    string $table Table nme to fetch records from
 	 *
-	 * @return string Condition or empty string
+	 * @return    string    Condition or empty string
 	 */
-	public function buildRecordWhere($table) {
+	function buildRecordWhere($table) {
 		$result = array();
-		if (!\Extension\Templavoila\Utility\GeneralUtility::getBackendUser()->isAdmin()) {
+		if (!$GLOBALS['BE_USER']->isAdmin()) {
 			$prefLen = strlen($table) + 1;
-			foreach (\Extension\Templavoila\Utility\GeneralUtility::getBackendUser()->userGroups as $group) {
-				$items = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $group['tx_templavoila_access'], 1);
+			foreach ($GLOBALS['BE_USER']->userGroups as $group) {
+				$items = t3lib_div::trimExplode(',', $group['tx_templavoila_access'], 1);
 				foreach ($items as $ref) {
 					if (strstr($ref, $table)) {
-						$result[] = (int)substr($ref, $prefLen);
+						$result[] = intval(substr($ref, $prefLen));
 					}
 				}
 			}
@@ -664,11 +571,11 @@ class tx_templavoila_dbnewcontentel {
 	/**
 	 * Process the default-value settings
 	 *
-	 * @param \Extension\Templavoila\Domain\Model\Template $toObj LocalProcessing as array
+	 * @param tx_templavoila_template $toObj LocalProcessing as array
 	 *
-	 * @return string additional URL arguments with configured default values
+	 * @return string    additional URL arguments with configured default values
 	 */
-	public function getDsDefaultValues(\Extension\Templavoila\Domain\Model\Template $toObj) {
+	function getDsDefaultValues(tx_templavoila_template $toObj) {
 
 		$dsStructure = $toObj->getLocalDataprotArray();
 
@@ -686,8 +593,13 @@ class tx_templavoila_dbnewcontentel {
 	}
 }
 
+// Include extension?
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/templavoila/mod1/db_new_content_el.php']) {
+	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/templavoila/mod1/db_new_content_el.php']);
+}
+
 // Make instance:
-$SOBE = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\tx_templavoila_dbnewcontentel::class);
+$SOBE = t3lib_div::makeInstance('tx_templavoila_dbnewcontentel');
 $SOBE->init();
 
 // Include files?

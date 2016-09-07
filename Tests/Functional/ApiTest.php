@@ -1,18 +1,33 @@
 <?php
 namespace Extension\Templavoila\Tests\Functional;
 
-/*
- * This file is part of the TYPO3 CMS project.
+/***************************************************************
+ *  Copyright notice
  *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ *  (c) 2005-2014 Robert Lemke (robert@typo3.org)
+ *  (c) 2014-2014 Alexander Schnitzler (typo3@alexanderschnitzler.de)
+ *  All rights reserved
  *
- * For the full copyright and license information, please read the
- * LICENSE.txt file that was distributed with this source code.
+ *  This script is part of the TYPO3 project. The TYPO3 project is
+ *  free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * The TYPO3 project - inspiring people to share!
- */
+ *  The GNU General Public License can be found at
+ *  http://www.gnu.org/copyleft/gpl.html.
+ *
+ *  This script is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  This copyright notice MUST APPEAR in all copies of the script!
+ ***************************************************************/
+
+if (!class_exists('TYPO3\CMS\Core\Tests\FunctionalTestCase')) {
+	return;
+}
 
 /**
  * @author Robert Lemke <robert@typo3.org>
@@ -36,7 +51,7 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 	);
 
 	/**
-	 * @var \Extension\Templavoila\Service\ApiService
+	 * @var \tx_templavoila_api
 	 */
 	protected $api;
 
@@ -55,7 +70,8 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 	 */
 	public function setUp() {
 		parent::setUp();
-		$this->api = new \Extension\Templavoila\Service\ApiService();
+
+		$this->api = new \tx_templavoila_api();
 
 		$this->dataHandler = $this->getMock('TYPO3\CMS\Core\DataHandling\DataHandler', array('dummy'));
 
@@ -135,6 +151,7 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 			'vLang' => 'vDEF',
 			'position' => '0' // Before first element
 		);
+		$testPageRecord = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('pages', 'uid=' . $pageUid, 'tx_templavoila_flex');
 
 		// run insertElement():
 		$secondElementUid = $this->api->insertElement($destinationPointer, $row);
@@ -356,7 +373,6 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 		}
 
 		// Check if the sorting field has been set correctly:
-		$elementRecords = array();
 		$elementRecords[1] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[1], 'uid,sorting');
 		$elementRecords[2] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[2], 'uid,sorting');
 		$elementRecords[3] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[3], 'uid,sorting');
@@ -380,7 +396,6 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 		$elementUids[4] = $this->api->insertElement($destinationPointer, $row);
 
 		// Check if the sorting field has been set correctly:
-		$elementRecords = array();
 		$elementRecords[1] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[1], 'uid,sorting');
 		$elementRecords[2] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[2], 'uid,sorting');
 		$elementRecords[3] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[3], 'uid,sorting');
@@ -429,7 +444,6 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 		);
 		$elementUids[2] = $this->api->insertElement($destinationPointer, $row);
 
-		$elementRecords = array();
 		$elementRecords[1] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[1], 'uid,sorting,colpos');
 		$elementRecords[2] = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('tt_content', 'uid=' . $elementUids[2], 'uid,sorting,colpos');
 
@@ -538,7 +552,7 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 
 		$this->getDatabaseConnection()->exec_UPDATEquery(
 			'tt_content',
-			'uid=' . (int)$elementUids[2],
+			'uid=' . intval($elementUids[2]),
 			array('deleted' => 1)
 		);
 
@@ -1570,11 +1584,21 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 			'position' => 2
 		);
 
+		$destinationPointer = array(
+			'table' => 'pages',
+			'uid' => $pageUid,
+			'sheet' => 'sDEF',
+			'sLang' => 'lDEF',
+			'field' => 'field_content',
+			'vLang' => 'vDE',
+			'position' => 0
+		);
+
 		$result = $this->api->localizeElement($sourcePointer, 'DE');
 		self::assertTrue($result !== FALSE, 'localizeElement()returned FALSE!');
 
 		// Check if the localized element has been referenced correctly:
-		$localizedUid = (int)$result;
+		$localizedUid = intval($result);
 		$testPageRecord = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordRaw('pages', 'uid=' . $pageUid, 'tx_templavoila_flex');
 		$flexform = simplexml_load_string($testPageRecord['tx_templavoila_flex']);
 		$xpathResArr = $flexform->xpath("//data/sheet[@index='sDEF']/language[@index='lDEF']/field[@index='field_content']/value[@index='vDE']");
@@ -1626,11 +1650,21 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 			'position' => 2
 		);
 
+		$destinationPointer = array(
+			'table' => 'pages',
+			'uid' => $pageUid,
+			'sheet' => 'sDEF',
+			'sLang' => 'lDEF',
+			'field' => 'field_content',
+			'vLang' => 'vDE',
+			'position' => 0
+		);
+
 		$result = $this->api->localizeElement($sourcePointer, 'DE');
 		self::assertTrue($result !== FALSE, 'localizeElement()returned FALSE!');
 
 		// Check if the localized element has been referenced correctly:
-		$localizedUid = (int)$result;
+		$localizedUid = intval($result);
 		$testPageRecord = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordWSOL('pages', $pageUid, 'uid,pid,tx_templavoila_flex');
 		$flexform = simplexml_load_string($testPageRecord['tx_templavoila_flex']);
 		$xpathResArr = $flexform->xpath("//data/sheet[@index='sDEF']/language[@index='lDEF']/field[@index='field_content']/value[@index='vDE']");
@@ -1767,7 +1801,7 @@ class ApiTest extends \TYPO3\CMS\Core\Tests\FunctionalTestCase {
 		$elementsBySortingFieldArr = $this->getDatabaseConnection()->exec_SELECTgetRows(
 			'uid',
 			'tt_content',
-			'pid=' . (int)$pageUid,
+			'pid=' . intval($pageUid),
 			'',
 			'sorting'
 		);
