@@ -31,7 +31,12 @@
  * @coauthor   Dmitry Dulepov <dmitry@typo3.org>
  */
 unset($MCONF);
-require ('conf.php');
+require(dirname(__FILE__) . '/conf.php');
+require($BACK_PATH . 'init.php');
+$LANG->includeLLFile('EXT:templavoila/mod1/locallang.xml');
+$BE_USER->modAccess($MCONF, 1); // This checks permissions and exits if the users has no permission for entry.
+
+t3lib_extMgm::isLoaded('cms', 1);
 
 /**
  * Module 'Page' for the 'templavoila' extension.
@@ -41,7 +46,7 @@ require ('conf.php');
  * @package        TYPO3
  * @subpackage    tx_templavoila
  */
-class tx_templavoila_module1 extends \TYPO3\CMS\Backend\Module\BaseScriptClass {
+class tx_templavoila_module1 extends t3lib_SCbase {
 
 	var $modTSconfig; // This module's TSconfig
 	var $modSharedTSconfig; // TSconfig from mod.SHARED
@@ -108,8 +113,6 @@ class tx_templavoila_module1 extends \TYPO3\CMS\Backend\Module\BaseScriptClass {
 	 */
 	function init() {
 		parent::init();
-        $this->getBackendUser()->modAccess($GLOBALS['MCONF'], 1);
-        $this->getLanguageService()->includeLLFile('EXT:ito_bolognat3/mod1/locallang.xml');
 
 		$this->modSharedTSconfig = t3lib_BEfunc::getModTSconfig($this->id, 'mod.SHARED');
 		$this->MOD_SETTINGS = t3lib_BEfunc::getModuleData($this->MOD_MENU, t3lib_div::_GP('SET'), $this->MCONF['name']);
