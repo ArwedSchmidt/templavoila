@@ -842,10 +842,10 @@ class tx_templavoila_pi1 extends tslib_pibase {
 
 		// Compile information:
 		$id = 'templavoila-preview-' . t3lib_div::shortMD5(microtime());
-		$content = '<div style="text-align: left; position: absolute; display:none; filter: alpha(Opacity=90);" id="' . $id . '">
+		$content = '<div class="templavoila-preview" style="text-align: left; position: absolute; display:none; filter: alpha(Opacity=90);" id="' . $id . '">
 						' . $infoArray . '
 					</div>
-					<div id="' . $id . '-wrapper" style=""
+					<div class="templavoila-preview-wrapper"  id="' . $id . '-wrapper" style=""
 						onmouseover="
 							document.getElementById(\'' . $id . '\').style.display=\'block\';
 							document.getElementById(\'' . $id . '-wrapper\').attributes.getNamedItem(\'style\').nodeValue = \'border: 2px dashed #333366;\';
