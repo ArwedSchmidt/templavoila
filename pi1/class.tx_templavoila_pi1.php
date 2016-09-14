@@ -856,8 +856,8 @@ class tx_templavoila_pi1 extends tslib_pibase {
 								">' .
 			$content .
 			'</div>';
-		if ($GLOBALS['TSFE']->tmpl->setup['config']['message_preview']) {
-		    $content = $GLOBALS['TSFE']->tmpl->setup['config']['message_preview'];
+		if (($table == "pages") && ($GLOBALS['TSFE']->tmpl->setup['config']['message_preview'])) {
+		    $content = $GLOBALS['TSFE']->tmpl->setup['config']['message_preview'].$content;
 		}
 
 		return $content;
